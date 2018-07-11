@@ -6,9 +6,9 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
-import com.howtographql.scala.sangria.elasticsearch.{ElasticsearchStream, ElasticsearchStreamContext}
-import com.howtographql.scala.sangria.graphql.GraphQLSchema
-import com.howtographql.scala.sangria.model.Link
+import com.twillms.sangria.elasticsearch.{ElasticsearchStream, ElasticsearchStreamContext}
+import com.twillms.sangria.graphql.GraphQLSchema
+import com.twillms.sangria.model.Link
 import sangria.ast.Document
 import sangria.execution._
 import sangria.execution.deferred.HasId

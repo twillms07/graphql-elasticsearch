@@ -1,15 +1,15 @@
-package com.twillms.elasticsearch
+package com.twillms.sangria.elasticsearch
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.DateTime
 import akka.stream.Materializer
 import akka.stream.alpakka.elasticsearch.scaladsl.{ElasticsearchSource, ElasticsearchSourceSettings}
 import akka.stream.scaladsl.Sink
-import com.howtographql.scala.sangria.model.{Link, User, Vote}
-import com.howtographql.scala.sangria.model.Link._
+import com.twillms.sangria.model.{Link, User, Vote}
+import com.twillms.sangria.model.Link._
 import org.apache.http.HttpHost
 import org.elasticsearch.client.RestClient
-import com.howtographql.scala.sangria.model.JsonFormats._
+import com.twillms.sangria.model.JsonFormats._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

@@ -1,8 +1,8 @@
 package com.twillms.sangria.graphql
 
 import akka.http.scaladsl.model.DateTime
-import com.howtographql.scala.sangria.elasticsearch.ElasticsearchStreamContext
-import com.howtographql.scala.sangria.model._
+import com.twillms.sangria.elasticsearch.ElasticsearchStreamContext
+import com.twillms.sangria.model._
 import sangria.ast.StringValue
 import sangria.execution.deferred.{DeferredResolver, Fetcher}
 import sangria.schema
