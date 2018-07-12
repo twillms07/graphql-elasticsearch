@@ -10,34 +10,63 @@ import sangria.schema._
 
 object GraphQLSchema {
 
-    val LinkType :ObjectType[Unit, Link] = ObjectType[Unit, Link](
+
+    val linksFetcher = Fetcher((ctx: ElasticsearchStreamContext, ids: Seq[Int]) =>
+        ctx.elasticsearchStream.getLinks(ids.toList))
+
+    val Resolver: DeferredResolver[ElasticsearchStreamContext] = DeferredResolver.fetchers(linksFetcher)
+
+    val IdentifiableType: InterfaceType[Unit, Identifiable] = InterfaceType[Unit, Identifiable](
+        "Identifiable",
+        fields[Unit, Identifiable](
+            Field("id", IntType, resolve = _.value.id)
+        )
+    )
+
+    implicit val GraphQLDateTime: ScalarType[DateTime] = ScalarType[DateTime](
+        "DateTime",
+        coerceOutput = (dateTime, _) => dateTime.toString,
+        coerceInput = {
+            case StringValue(dateTime, _, _) => DateTime.fromIsoDateTimeString(dateTime).toRight(DateTimeCoerceViolation)
+            case _ => Left(DateTimeCoerceViolation)
+        },
+        coerceUserInput = {
+            case s: String => DateTime.fromIsoDateTimeString(s).toRight(DateTimeCoerceViolation)
+            case _ => Left(DateTimeCoerceViolation)
+        }
+    )
+
+    val LinkType: ObjectType[Unit, Link] = ObjectType[Unit, Link](
         "Link",
+        interfaces[Unit, Link](IdentifiableType),
         fields[Unit, Link](
             Field("id", IntType, resolve = _.value.id),
             Field("url", StringType, resolve = _.value.url),
             Field("description", StringType, resolve = _.value.description),
+            Field("dateTime",GraphQLDateTime, resolve = _.value.dateTime)
         )
     )
-
-
-//    val Id = Argument("id", IntType)
+    
+    val Id = Argument("id", IntType)
 
     val Ids = Argument("ids", ListInputType(IntType))
 
     val QueryType = ObjectType(
         "Query",
         fields[ElasticsearchStreamContext, Unit](
+            //            Field("link",
+            //                ListType(LinkType),
+            //                arguments = Id :: Nil,
+            //                resolve = c => linksFetcher.deferOpt(c.arg(Id))
+            //            ),
             Field("links",
                 ListType(LinkType),
-//                arguments = List(Argument("ids", ListInputType(IntType))),
-//                resolve = c => c.ctx.elasticsearchStream.getLinks(c.arg[Seq[Int]]("ids"))
                 arguments = Ids :: Nil,
-                resolve = c => c.ctx.elasticsearchStream.getLinks(c.arg(Ids))
+                resolve = c => linksFetcher.deferSeq(c.arg(Ids))
             )
         )
 
     )
-
 
 
     val SchemaDefinition = Schema(QueryType)

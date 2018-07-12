@@ -22,9 +22,6 @@ import scala.util.{Failure, Success}
 
 class GraphQLServer(implicit val actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) {
 
-//    private val dao: DAO = DBSchema.createDatabase
-
-
     implicit val linkHasId:HasId[Link,Int] = HasId[Link, Int](_.id)
 
     private val elasticsearchStream:ElasticsearchStream = ElasticsearchStream.createElasticStream
@@ -62,6 +59,7 @@ class GraphQLServer(implicit val actorSystem: ActorSystem, actorMaterializer: Ac
             query,
             ElasticsearchStreamContext(elasticsearchStream),
             variables = vars,
+            deferredResolver = GraphQLSchema.Resolver,
             operationName = operation
         ).map(OK -> _)
             .recover {
