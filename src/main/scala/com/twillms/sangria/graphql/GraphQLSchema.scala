@@ -5,7 +5,6 @@ import com.twillms.sangria.elasticsearch.ElasticsearchStreamContext
 import com.twillms.sangria.model._
 import sangria.ast.StringValue
 import sangria.execution.deferred.{DeferredResolver, Fetcher}
-import sangria.schema
 import sangria.schema._
 
 object GraphQLSchema {
@@ -14,7 +13,15 @@ object GraphQLSchema {
     val linksFetcher = Fetcher((ctx: ElasticsearchStreamContext, ids: Seq[Int]) =>
         ctx.elasticsearchStream.getLinks(ids.toList))
 
-    val Resolver: DeferredResolver[ElasticsearchStreamContext] = DeferredResolver.fetchers(linksFetcher)
+    val userFetcher = Fetcher(
+        (ctx: ElasticsearchStreamContext, ids: Seq[Int]) => ctx.elasticsearchStream.getUsers(ids.toList)
+    )
+
+    val voteFetcher = Fetcher(
+        (ctx: ElasticsearchStreamContext, ids: Seq[Int]) => ctx.elasticsearchStream.getVotes(ids.toList)
+    )
+
+    val Resolver: DeferredResolver[ElasticsearchStreamContext] = DeferredResolver.fetchers(linksFetcher, userFetcher, voteFetcher)
 
     val IdentifiableType: InterfaceType[Unit, Identifiable] = InterfaceType[Unit, Identifiable](
         "Identifiable",
@@ -43,10 +50,34 @@ object GraphQLSchema {
             Field("id", IntType, resolve = _.value.id),
             Field("url", StringType, resolve = _.value.url),
             Field("description", StringType, resolve = _.value.description),
-            Field("dateTime",GraphQLDateTime, resolve = _.value.dateTime)
+            Field("dateTime", GraphQLDateTime, resolve = _.value.dateTime)
         )
     )
-    
+
+    val UserType: ObjectType[Unit, User] = ObjectType[Unit, User](
+        "User",
+        interfaces[Unit, User](IdentifiableType),
+        fields[Unit, User](
+            Field("id", IntType, resolve = _.value.id),
+            Field("name", StringType, resolve = _.value.name),
+            Field("email", StringType, resolve = _.value.email),
+            Field("password", StringType, resolve = _.value.password),
+            Field("createdAt", GraphQLDateTime, resolve = _.value.createdAt)
+        )
+    )
+
+    val VoteType: ObjectType[Unit, Vote] = ObjectType[Unit, Vote](
+        "Vote",
+        interfaces[Unit, Vote](IdentifiableType),
+        fields[Unit, Vote](
+            Field("id", IntType, resolve = _.value.id),
+            Field("url", IntType, resolve = _.value.userId),
+            Field("description", IntType, resolve = _.value.linkId),
+            Field("createdAt", GraphQLDateTime, resolve = _.value.createdAt)
+        )
+    )
+
+
     val Id = Argument("id", IntType)
 
     val Ids = Argument("ids", ListInputType(IntType))
@@ -54,15 +85,35 @@ object GraphQLSchema {
     val QueryType = ObjectType(
         "Query",
         fields[ElasticsearchStreamContext, Unit](
-            //            Field("link",
-            //                ListType(LinkType),
-            //                arguments = Id :: Nil,
-            //                resolve = c => linksFetcher.deferOpt(c.arg(Id))
-            //            ),
+            Field("link",
+                OptionType(LinkType),
+                arguments = Id :: Nil,
+                resolve = c => linksFetcher.deferOpt(c.arg(Id))
+            ),
             Field("links",
                 ListType(LinkType),
                 arguments = Ids :: Nil,
                 resolve = c => linksFetcher.deferSeq(c.arg(Ids))
+            ),
+            Field("user",
+                OptionType(UserType),
+                arguments = Id :: Nil,
+                resolve = c => userFetcher.deferOpt(c.arg(Id))
+            ),
+            Field("users",
+                ListType(UserType),
+                arguments = List(Argument("ids", ListInputType(IntType))),
+                resolve = c => userFetcher.deferSeq(c.arg(Ids))
+            ),
+            Field("vote",
+                OptionType(VoteType),
+                arguments = Id :: Nil,
+                resolve = c => voteFetcher.deferOpt(c.arg(Id))
+            ),
+            Field("votes",
+                ListType(VoteType),
+                arguments = Ids :: Nil,
+                resolve = c => voteFetcher.deferSeq(c.arg(Ids))
             )
         )
 
