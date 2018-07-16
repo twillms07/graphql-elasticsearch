@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.DateTime
 import com.twillms.sangria.elasticsearch.ElasticsearchStreamContext
 import com.twillms.sangria.model._
 import sangria.ast.StringValue
-import sangria.execution.deferred.{DeferredResolver, Fetcher}
+import sangria.execution.deferred.{DeferredResolver, Fetcher, Relation}
 import sangria.schema._
 
 object GraphQLSchema {
@@ -20,6 +20,8 @@ object GraphQLSchema {
     val voteFetcher = Fetcher(
         (ctx: ElasticsearchStreamContext, ids: Seq[Int]) => ctx.elasticsearchStream.getVotes(ids.toList)
     )
+
+    val linkByUserRel : Relation[Link, Link, Int] = Relation[Link, Int]("byUser", l => Seq(l.postedBy))
 
     val Resolver: DeferredResolver[ElasticsearchStreamContext] = DeferredResolver.fetchers(linksFetcher, userFetcher, voteFetcher)
 
@@ -77,7 +79,6 @@ object GraphQLSchema {
         )
     )
 
-
     val Id = Argument("id", IntType)
 
     val Ids = Argument("ids", ListInputType(IntType))
@@ -118,7 +119,6 @@ object GraphQLSchema {
         )
 
     )
-
 
     val SchemaDefinition = Schema(QueryType)
 

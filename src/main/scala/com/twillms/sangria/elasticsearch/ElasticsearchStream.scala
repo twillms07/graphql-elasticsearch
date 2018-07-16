@@ -41,7 +41,17 @@ class ElasticsearchStream(implicit val actorSystem: ActorSystem, material: Mater
 //        linkResults.foreach(r => println(s"The link results are = $r"))
 //        linkResults
 
-        val links = Seq(Link(2,"my.url.com.2","test-url-2",DateTime.now),Link(3,"my.url.com.3","test-url-3",dateTime = DateTime.now))
+        val links = Seq(Link(2,"my.url.com.2","test-url-2", postedBy = 3, DateTime.now),Link(3,"my.url.com.3","test-url-3", postedBy = 3, dateTime = DateTime.now))
+        println(s"Calling getLinks - ${DateTime.now} with - $links")
+        Future(links)
+    }
+
+    def getLinksByUser(userIds: List[Int]) : Future[Seq[Link]]  = {
+        val links = Seq(
+            Link(2,"my.url.com.2","test-url-2",
+                postedBy = 3, DateTime.now),Link(3,"my.url.com.3","test-url-3",
+                postedBy = 3, dateTime = DateTime.now))
+
         println(s"Calling getLinks - ${DateTime.now} with - $links")
         Future(links)
     }
